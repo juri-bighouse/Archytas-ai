@@ -1,1 +1,1 @@
-# ghost-ai
+# archytas-ai
