@@ -4,15 +4,20 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Design System (Feature Unit 01) — complete.
+- Editor Chrome (Feature Unit 02) — complete.
 
 ## Current Goal
 
-- Move on to authentication and route protection (Feature 02).
+- Move on to authentication and route protection (Feature 03).
 
 ## Completed
 
 - Boilerplate cleanup: stripped globals.css, removed SVGs, replaced page.tsx with minimal placeholder.
+- Feature 02 — Editor Chrome:
+  - `components/editor/editor-navbar.tsx`: fixed-height navbar, sidebar toggle (PanelLeftOpen/PanelLeftClose), left/center/right sections, dark bg + bottom border.
+  - `components/editor/project-sidebar.tsx`: floating overlay sidebar (position fixed, no layout push), slides from left via transform, isOpen/onClose props, Project header + close button, shadcn Tabs (My Project / Shared) with empty placeholders, full-width New Project button with Plus icon.
+  - Dialog pattern: existing `components/ui/dialog.tsx` exports DialogTitle, DialogDescription, DialogHeader, DialogFooter — ready for use.
+  - Verified: tsc --noEmit clean.
 - Feature 01 — Design system:
   - shadcn/ui initialized (Tailwind v4, "base-nova" style, neutral base, RSC, lucide icons).
   - Components added: button, card, dialog, input, tabs, textarea, scroll-area.
@@ -27,7 +32,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Feature 02: Authentication and route protection (Clerk).
+- Feature 03: Authentication and route protection (Clerk).
 
 ## Open Questions
 
