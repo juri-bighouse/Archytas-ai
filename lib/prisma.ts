@@ -9,7 +9,7 @@ function createPrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL ?? "";
 
   if (url.startsWith("prisma+postgres://")) {
-    return new PrismaClient({ datasourceUrl: url });
+    return new PrismaClient({ accelerateUrl: url });
   }
 
   const adapter = new PrismaPg({ connectionString: url });

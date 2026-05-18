@@ -1,19 +1,19 @@
 "use client"
 
 import { createContext, useContext, type ReactNode } from "react"
-import type { MockProject } from "@/lib/projects/mock-data"
+import type { ProjectSummary } from "@/lib/projects/data"
 
 interface ProjectDialogActions {
   openCreate: () => void
-  openRename: (project: MockProject) => void
-  openDelete: (project: MockProject) => void
+  openRename: (project: ProjectSummary) => void
+  openDelete: (project: ProjectSummary) => void
 }
 
 const ProjectDialogsContext = createContext<ProjectDialogActions | null>(null)
 
 interface ProjectDialogsProviderProps {
-  value: ProjectDialogActions
-  children: ReactNode
+  readonly value: ProjectDialogActions
+  readonly children: ReactNode
 }
 
 export function ProjectDialogsProvider({ value, children }: ProjectDialogsProviderProps) {

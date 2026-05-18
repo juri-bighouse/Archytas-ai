@@ -2,13 +2,13 @@
 
 import { Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { MockProject } from "@/lib/projects/mock-data"
+import type { ProjectSummary } from "@/lib/projects/data"
 
 interface ProjectListItemProps {
-  readonly project: MockProject
+  readonly project: ProjectSummary
   readonly showActions: boolean
-  readonly onRename?: (project: MockProject) => void
-  readonly onDelete?: (project: MockProject) => void
+  readonly onRename?: (project: ProjectSummary) => void
+  readonly onDelete?: (project: ProjectSummary) => void
 }
 
 export function ProjectListItem({

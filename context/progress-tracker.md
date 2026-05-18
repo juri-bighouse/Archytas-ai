@@ -4,13 +4,34 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Project Dialogs and Editor Home (Feature Unit 04) — complete.
+- Wire Editor Home (Feature Unit 07) — complete.
 
 ## Current Goal
 
-- Move on to Feature 05 (next feature unit).
+- Move on to Feature 08 (next feature unit).
 
 ## Completed
+
+- Feature 07 — Wire Editor Home:
+  - `lib/projects/data.ts`: `ProjectSummary` type and server-side helpers `getOwnedProjects(userId)` (where `ownerId === userId`, `orderBy createdAt desc`, select `id + name`) / `getSharedProjects(userEmail)` (where `collaborators.some.email === userEmail`, same select; returns `[]` when no email).
+  - `lib/projects/slug.ts`: replaces the old `mock-data` slug helper. Exports `slugify`, `generateRoomSuffix` (6-char base36), and `buildRoomId(name)` = `slug-suffix` (or just suffix if name produces no slug).
+  - `hooks/use-project-actions.ts`: replaces `use-project-dialogs`. Owns dialog state + project name input + loading/error and the three mutations. `create` builds the room ID via `buildRoomId`, POSTs `{ id, name }`, navigates to `/editor/{project.id}`. `rename` PATCHes name then `router.refresh()`. `remove` DELETEs, then `router.push("/editor")` if the user was on the active workspace (`pathname === "/editor/{id}"`), else `router.refresh()`. Errors surface via the controller; close is blocked while loading.
+  - `app/api/projects/route.ts` (POST): now also accepts an optional client-provided `id`. Required so the client-generated room ID becomes the project ID, keeping project ID and Liveblocks room ID aligned (spec invariant). Name handling unchanged.
+  - `app/editor/layout.tsx`: converted to a server component. Calls `auth()` (redirects to `/sign-in` if missing — Feature 03 proxy already enforces this, but the redirect makes `userId` non-null for typing), reads the user's primary email via `currentUser()`, fetches owned + shared projects in parallel, and passes them to a new client `EditorShell`.
+  - `components/editor/editor-shell.tsx`: new client wrapper that owns sidebar open state + the `useProjectActions` controller, provides `ProjectDialogsProvider`, and renders `EditorNavbar`, `ProjectSidebar`, `<main>{children}</main>`, and `<ProjectDialogs>`.
+  - `components/editor/project-dialogs.tsx`: now consumes `UseProjectActionsResult`. Create dialog shows `Room ID: {slug}-…` preview (using `slugify` for the live portion; the random suffix is generated only at submit time). Rename dialog already pre-fills current name. All three dialogs disable inputs/buttons while `loading`, show button text "Creating…/Renaming…/Deleting…", and render `error` text in `text-state-error`.
+  - `components/editor/project-dialogs-context.tsx`, `project-sidebar.tsx`, `project-list-item.tsx`: swapped `MockProject` for `ProjectSummary`.
+  - `app/editor/[projectId]/page.tsx`: minimal placeholder workspace page so create-navigation has a real destination and delete-from-active-workspace can be detected. Validates auth + ownership-or-collaborator access; renders project name + ID. (The real workspace UI is a later feature.)
+  - Removed: `lib/projects/mock-data.ts`, `hooks/use-project-dialogs.ts`.
+  - Verified: `npm run build` passes (TypeScript + Next.js production build) — all six routes including new `/editor/[projectId]` compile.
+
+- Feature 06 — Project APIs (backend only):
+  - `app/api/projects/route.ts`: `GET` lists current user's owned projects (`ownerId === userId`, ordered by `createdAt desc`). `POST` creates a project — accepts optional `{ name }`, trims it, defaults to `"Untitled Project"` if missing or empty. Returns `401` if unauthenticated. ID strategy delegates to schema `@default(cuid())`.
+  - `app/api/projects/[projectId]/route.ts`: `PATCH` renames (requires non-empty `name`); `DELETE` removes. Both: `401` if unauthenticated, `404` if project does not exist, `403` if exists but `ownerId !== userId`. PATCH returns updated project; DELETE returns `204`.
+  - `proxy.ts`: added `isApiRoute` matcher and made the proxy skip `auth.protect()` for `/api/(.*)`. Necessary because Clerk's `auth.protect()` returns `404` (not `401`) for non-document requests, which would conflict with the spec's `401` requirement. API handlers now own their auth checks via `auth()` from `@clerk/nextjs/server`.
+  - `lib/prisma.ts`: replaced unsupported `datasourceUrl` option with `accelerateUrl` (Prisma 7 dropped `datasourceUrl` from `PrismaClientOptions`; the `prisma+postgres://` scheme corresponds to Accelerate).
+  - `prisma.config.ts`: removed `engine: "classic"` (not a valid field on `PrismaConfig` in current `@prisma/config`).
+  - Verified: `npm run build` passes (TypeScript + Next.js production build).
 
 - Feature 04 — Project Dialogs and Editor Home:
   - `lib/projects/mock-data.ts`: `MockProject` type, `MOCK_OWNED_PROJECTS`/`MOCK_SHARED_PROJECTS` arrays, `slugify()` helper. Mock-only — no API calls or persistence.
@@ -52,7 +73,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Feature 05 (TBD — check feature-specs directory for next spec).
+- Feature 08 (TBD — check feature-specs directory for next spec). Likely candidates: build the real `/editor/[projectId]` workspace UI (canvas + Liveblocks room), or starter template library.
 
 ## Open Questions
 
@@ -63,6 +84,9 @@ Update this file whenever the current phase, active feature, or implementation s
 - Dark-only theme. No light mode. All color tokens are CSS custom properties in globals.css, exposed to Tailwind utilities via @theme inline.
 - shadcn primitives are the foundation component layer and must remain unmodified after generation.
 - Next.js 16 uses `proxy.ts` (not `middleware.ts`); the exported function must be named `proxy`. `NextProxy = NextMiddleware` so `clerkMiddleware` output is compatible.
+- API routes are exempt from the proxy's `auth.protect()` and own their own auth via `auth()` from `@clerk/nextjs/server`. This is required because `auth.protect()` returns `404` to non-document/API requests, which would prevent handlers from returning the spec-mandated `401`.
+- Project ID === Liveblocks room ID. The client builds the ID (`slug-suffix`) at create time and POSTs it; the server stores it as `project.id`. POST `/api/projects` therefore accepts an optional `id` in addition to the schema's `@default(cuid())`.
+- Editor data flow: `app/editor/layout.tsx` is a server component and is the single fetch point for the user's owned + shared projects. Data flows down to a client `EditorShell` which holds sidebar state + the `useProjectActions` controller. Mutations call the API and use `router.refresh()` / `router.push()` to re-sync the server-rendered lists.
 
 ## Session Notes
 
@@ -72,6 +96,6 @@ Update this file whenever the current phase, active feature, or implementation s
 - Clerk packages (@clerk/nextjs, @clerk/ui, @clerk/backend, @clerk/react, @clerk/shared) were pre-installed in node_modules but missing from package.json — added in Feature 03.
 - ClerkProvider must wrap the <html> element, so it sits outside the html tag in layout.tsx.
 - Clerk appearance variables accept CSS var() references, enabling full design-token integration without hardcoded colors.
-- Dialog/form/loading state lives in a single `useProjectDialogs()` hook owned by `app/editor/layout.tsx`; openers are surfaced to descendants via `ProjectDialogsContext` so the editor home and sidebar share one controller.
-- Mock projects live in `lib/projects/mock-data.ts` and are imported directly by the layout — Feature 04 has no API or persistence layer yet.
+- Dialog/form/loading/mutation state now lives in `useProjectActions()` (replaces the Feature-04 `useProjectDialogs`). The hook is owned by the client `EditorShell`; openers are surfaced to descendants via `ProjectDialogsContext` so the editor home button and sidebar share one controller.
 - Sidebar mobile dismissal uses a fixed `<button>` backdrop scrim hidden at `md:` and above; tapping it calls `onClose`.
+- Delete-from-active-workspace detection compares `usePathname()` to `/editor/{target.id}` — works because the workspace route is `app/editor/[projectId]/page.tsx`.

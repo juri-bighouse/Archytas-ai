@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { ProjectListItem } from "./project-list-item"
-import type { MockProject } from "@/lib/projects/mock-data"
+import type { ProjectSummary } from "@/lib/projects/data"
 
 interface ProjectSidebarProps {
   readonly isOpen: boolean
   readonly onClose: () => void
-  readonly ownedProjects: readonly MockProject[]
-  readonly sharedProjects: readonly MockProject[]
+  readonly ownedProjects: readonly ProjectSummary[]
+  readonly sharedProjects: readonly ProjectSummary[]
   readonly onCreate: () => void
-  readonly onRename: (project: MockProject) => void
-  readonly onDelete: (project: MockProject) => void
+  readonly onRename: (project: ProjectSummary) => void
+  readonly onDelete: (project: ProjectSummary) => void
 }
 
 export function ProjectSidebar({

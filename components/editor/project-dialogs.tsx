@@ -1,6 +1,6 @@
 "use client"
 
-import type { ChangeEvent } from "react"
+import { useMemo, type ChangeEvent, type ComponentProps } from "react"
 import {
   Dialog,
   DialogContent,
@@ -10,15 +10,13 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { slugify } from "@/lib/projects/mock-data"
-import type { UseProjectDialogsResult } from "@/hooks/use-project-dialogs"
+import { slugify } from "@/lib/projects/slug"
+import type { UseProjectActionsResult } from "@/hooks/use-project-actions"
 
-type FormSubmitEvent = Parameters<
-  NonNullable<React.ComponentProps<"form">["onSubmit"]>
->[0]
+type FormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]
 
 interface ProjectDialogsProps {
-  readonly controller: UseProjectDialogsResult
+  readonly controller: UseProjectActionsResult
 }
 
 const dialogClassName =
@@ -27,7 +25,9 @@ const dialogClassName =
 const footerClassName = "flex flex-row justify-end gap-2"
 
 export function ProjectDialogs({ controller }: ProjectDialogsProps) {
-  const { mode, target, name, loading, setName, close, submit } = controller
+  const { mode, target, name, loading, error, setName, close, submit } = controller
+
+  const slugPreview = useMemo(() => (mode === "create" ? slugify(name) : ""), [mode, name])
 
   const handleOpenChange = (open: boolean) => {
     if (!open) close()
@@ -36,14 +36,16 @@ export function ProjectDialogs({ controller }: ProjectDialogsProps) {
   const handleSubmit = (event: FormSubmitEvent) => {
     event.preventDefault()
     if (!name.trim()) return
-    submit()
+    void submit()
   }
 
   const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value)
   }
 
-  const slugPreview = mode === "create" ? slugify(name) : ""
+  const handleDeleteClick = () => {
+    void submit()
+  }
 
   return (
     <>
@@ -64,21 +66,25 @@ export function ProjectDialogs({ controller }: ProjectDialogsProps) {
                 onChange={handleNameChange}
                 placeholder="My new project"
                 autoFocus
+                disabled={loading}
                 className="text-copy-primary"
               />
               <p className="text-xs text-copy-muted">
-                Slug:{" "}
+                Room ID:{" "}
                 <span className="font-mono text-copy-secondary">
-                  {slugPreview || "—"}
+                  {slugPreview ? `${slugPreview}-…` : "—"}
                 </span>
               </p>
+              {error && (
+                <p className="text-xs text-state-error">{error}</p>
+              )}
             </div>
             <div className={footerClassName}>
-              <Button type="button" variant="secondary" onClick={close}>
+              <Button type="button" variant="secondary" onClick={close} disabled={loading}>
                 Close
               </Button>
               <Button type="submit" disabled={!name.trim() || loading}>
-                Create Project
+                {loading ? "Creating…" : "Create Project"}
               </Button>
             </div>
           </form>
@@ -100,14 +106,18 @@ export function ProjectDialogs({ controller }: ProjectDialogsProps) {
               value={name}
               onChange={handleNameChange}
               autoFocus
+              disabled={loading}
               className="text-copy-primary"
             />
+            {error && (
+              <p className="text-xs text-state-error">{error}</p>
+            )}
             <div className={footerClassName}>
-              <Button type="button" variant="secondary" onClick={close}>
+              <Button type="button" variant="secondary" onClick={close} disabled={loading}>
                 Close
               </Button>
               <Button type="submit" disabled={!name.trim() || loading}>
-                Rename Project
+                {loading ? "Renaming…" : "Rename Project"}
               </Button>
             </div>
           </form>
@@ -122,21 +132,23 @@ export function ProjectDialogs({ controller }: ProjectDialogsProps) {
                 Delete Project
               </DialogTitle>
               <DialogDescription className="text-copy-secondary">
-                Delete &ldquo;{target?.name ?? ""}&rdquo;? This action cannot be
-                undone.
+                Delete &ldquo;{target?.name ?? ""}&rdquo;? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
+            {error && (
+              <p className="text-xs text-state-error">{error}</p>
+            )}
             <div className={footerClassName}>
-              <Button type="button" variant="secondary" onClick={close}>
+              <Button type="button" variant="secondary" onClick={close} disabled={loading}>
                 Close
               </Button>
               <Button
                 type="button"
                 variant="destructive"
-                onClick={submit}
+                onClick={handleDeleteClick}
                 disabled={loading}
               >
-                Delete Project
+                {loading ? "Deleting…" : "Delete Project"}
               </Button>
             </div>
           </div>
