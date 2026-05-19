@@ -1,6 +1,6 @@
-import { auth, currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { EditorShell } from "@/components/editor/editor-shell"
+import { getCurrentIdentity } from "@/lib/project-access"
 import { getOwnedProjects, getSharedProjects } from "@/lib/projects/data"
 
 export default async function EditorLayout({
@@ -8,19 +8,21 @@ export default async function EditorLayout({
 }: {
   readonly children: React.ReactNode
 }) {
-  const { userId } = await auth()
-  if (!userId) redirect("/sign-in")
-
-  const user = await currentUser()
-  const email = user?.primaryEmailAddress?.emailAddress ?? null
+  const identity = await getCurrentIdentity()
+  if (!identity) redirect("/sign-in")
 
   const [ownedProjects, sharedProjects] = await Promise.all([
-    getOwnedProjects(userId),
-    getSharedProjects(email),
+    getOwnedProjects(identity.userId),
+    getSharedProjects(identity.email),
   ])
 
   return (
-    <EditorShell ownedProjects={ownedProjects} sharedProjects={sharedProjects}>
+    <EditorShell
+      ownedProjects={ownedProjects}
+      sharedProjects={sharedProjects}
+      userInitial={identity.initial}
+      userImageUrl={identity.imageUrl}
+    >
       {children}
     </EditorShell>
   )

@@ -12,6 +12,9 @@ interface ProjectSidebarProps {
   readonly onClose: () => void
   readonly ownedProjects: readonly ProjectSummary[]
   readonly sharedProjects: readonly ProjectSummary[]
+  readonly activeProjectId: string | null
+  readonly userInitial: string
+  readonly userImageUrl: string | null
   readonly onCreate: () => void
   readonly onRename: (project: ProjectSummary) => void
   readonly onDelete: (project: ProjectSummary) => void
@@ -22,6 +25,9 @@ export function ProjectSidebar({
   onClose,
   ownedProjects,
   sharedProjects,
+  activeProjectId,
+  userInitial,
+  userImageUrl,
   onCreate,
   onRename,
   onDelete,
@@ -72,6 +78,7 @@ export function ProjectSidebar({
                       <ProjectListItem
                         project={project}
                         showActions
+                        isActive={project.id === activeProjectId}
                         onRename={onRename}
                         onDelete={onDelete}
                       />
@@ -89,7 +96,11 @@ export function ProjectSidebar({
                 <ul className="flex flex-col gap-0.5">
                   {sharedProjects.map((project) => (
                     <li key={project.id}>
-                      <ProjectListItem project={project} showActions={false} />
+                      <ProjectListItem
+                        project={project}
+                        showActions={false}
+                        isActive={project.id === activeProjectId}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -98,8 +109,20 @@ export function ProjectSidebar({
           </Tabs>
         </div>
 
-        <div className="shrink-0 border-t border-surface-border p-3">
-          <Button className="w-full gap-1.5" onClick={onCreate}>
+        <div className="flex shrink-0 items-center gap-2 border-t border-surface-border p-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-surface-border bg-elevated text-sm font-medium text-brand">
+            {userImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={userImageUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              userInitial
+            )}
+          </div>
+          <Button className="flex-1 gap-1.5" onClick={onCreate}>
             <Plus />
             New Project
           </Button>

@@ -4,13 +4,29 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Wire Editor Home (Feature Unit 07) — complete.
+- Editor Workspace Shell (Feature Unit 08) — complete.
 
 ## Current Goal
 
-- Move on to Feature 08 (next feature unit).
+- Move on to Feature 09 (next feature unit — likely real canvas + Liveblocks room, or starter template library).
 
 ## Completed
+
+- Feature 08 — Editor Workspace Shell:
+  - Spec `context/feature-specs/08-editor-workspace-shell.md` was expanded after the first pass to capture the full designed placeholder (compass hero, grid + radial glow, AI Copilot panel with two cards, `Workspace` eyebrow, Share + AI pill, sidebar avatar chip). The first implementation followed the original minimal wording literally; second pass matches the richer design.
+  - Third pass fixed a context-tree bug: `WorkspaceProvider` had been placed inside `WorkspaceShell` (page level), but `EditorNavbar` lives in `EditorShell` (layout level) — above the provider in the React tree. The navbar therefore always read `useWorkspaceContext()` as `null`, so project name, Share button, and AI pill never rendered, and the AI sidebar could not be toggled. Provider, AI sidebar render, and `aiSidebarOpen` state were lifted into `EditorShell`, which derives the active project from `usePathname()` + the `ownedProjects` / `sharedProjects` lists already fetched by the layout. `WorkspaceShell` is now a pure server component (just the canvas placeholder).
+  - `lib/project-access.ts`: shared server-side helpers. `getCurrentIdentity()` returns `{ userId, email, initial, imageUrl }` via `auth()` + `currentUser()` (or `null` if unauthenticated). Initial falls back firstName → username → email, uppercased. `getProjectAccess(projectId, identity)` loads the project + collaborator emails and returns `{ project, hasAccess, role }` where role is `"owner" | "collaborator" | "none"`. Returns `null` for non-existent projects so the page can render `AccessDenied`.
+  - `components/editor/access-denied.tsx`: centered empty state — lock icon in a rounded `bg-elevated` chip, heading, short message, and a `text-brand` link back to `/editor`. Server component (no `"use client"`).
+  - `components/editor/workspace-context.tsx`: client `WorkspaceProvider` + `useWorkspaceContext()` exposing `{ projectId, projectName, aiSidebarOpen, toggleAiSidebar, closeAiSidebar }` or `null`. Provider value is nullable: rendered always, but value is `null` when there is no active project so the navbar can branch on presence.
+  - `components/editor/ai-sidebar.tsx`: floating right slide-over card (`top-14 right-3 bottom-3`, `rounded-2xl`, glass `bg-surface/80 backdrop-blur`). Header: `AI Copilot` + `Placeholder panel` subtitle, sparkles icon. Body: `Chat surface pending` card (bot icon, body copy). Footer pinned card: `FUTURE HOOKS` eyebrow + paragraph. No interactivity beyond the toggle. Rendered by `EditorShell` (not the page) so it lives in the same provider scope as the navbar that toggles it.
+  - `components/editor/workspace-shell.tsx`: server component rendering only the canvas placeholder — subtle grid pattern (linear gradients with radial mask) + a top-centered cyan radial glow, and a centered hero: compass-icon chip → `WORKSPACE SHELL` eyebrow → `Canvas and collaboration tooling land here next.` headline → multi-line subcopy. No state, no provider — those live in `EditorShell`.
+  - `components/editor/editor-navbar.tsx`: reads `useWorkspaceContext()`. When inside a workspace, left shows project name + `Workspace` eyebrow underneath; right shows a glass-bordered `Share` button with cyan share icon (no behavior yet) and a pill-shaped `AI` toggle that paints brand cyan + `border-brand/40` + `bg-accent-dim` when open. Outside a workspace only `UserButton` is shown on the right.
+  - `components/editor/project-list-item.tsx`: rows are `next/link` anchors so clicks navigate to `/editor/{id}`. Active row uses `bg-accent-dim text-copy-primary` with `aria-current="page"`; inactive rows use `text-copy-secondary` + `hover:bg-elevated`. Rename/Delete buttons live alongside the link (no nested interactive elements).
+  - `components/editor/project-sidebar.tsx`: accepts `activeProjectId`, `userInitial`, `userImageUrl`. Per-row `isActive` is passed to both lists. Footer now renders a circular user-avatar chip (image or initial fallback, `border-surface-border bg-elevated text-brand`) to the left of the `New Project` button.
+  - `components/editor/editor-shell.tsx`: derives `activeProjectId` from `usePathname()` via `/^\/editor\/([^/]+)/`, looks up `activeProject` in `ownedProjects` then `sharedProjects`, owns `aiSidebarOpen`, builds the `WorkspaceContextValue` (or `null`) inside `useMemo`, wraps the whole shell in `WorkspaceProvider`, and renders `<AiSidebar>` only when there is an active workspace. Accepts `userInitial` + `userImageUrl` and forwards them to `ProjectSidebar`.
+  - `app/editor/layout.tsx`: uses `getCurrentIdentity()` and forwards `identity.initial` + `identity.imageUrl` into `EditorShell` alongside the owned + shared projects.
+  - `app/editor/[projectId]/page.tsx`: `getCurrentIdentity()` → redirect to `/sign-in` if missing. `getProjectAccess()` → `AccessDenied` if project not found or user is neither owner nor collaborator. Otherwise renders `<WorkspaceShell />` (no props — chrome state is driven by `EditorShell` via pathname + project lists). Missing and unauthorized both show `AccessDenied` per spec (replaces the prior `notFound()` flow).
+  - Verified: `npm run build` passes (TypeScript + Next.js production build, all routes compile).
 
 - Feature 07 — Wire Editor Home:
   - `lib/projects/data.ts`: `ProjectSummary` type and server-side helpers `getOwnedProjects(userId)` (where `ownerId === userId`, `orderBy createdAt desc`, select `id + name`) / `getSharedProjects(userEmail)` (where `collaborators.some.email === userEmail`, same select; returns `[]` when no email).
@@ -73,7 +89,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Feature 08 (TBD — check feature-specs directory for next spec). Likely candidates: build the real `/editor/[projectId]` workspace UI (canvas + Liveblocks room), or starter template library.
+- Feature 09 (TBD — check `context/feature-specs/` for next spec). Likely candidates: real canvas (React Flow + Liveblocks room), starter template library, or wiring the Share button to a collaborator invite flow.
 
 ## Open Questions
 
@@ -87,6 +103,9 @@ Update this file whenever the current phase, active feature, or implementation s
 - API routes are exempt from the proxy's `auth.protect()` and own their own auth via `auth()` from `@clerk/nextjs/server`. This is required because `auth.protect()` returns `404` to non-document/API requests, which would prevent handlers from returning the spec-mandated `401`.
 - Project ID === Liveblocks room ID. The client builds the ID (`slug-suffix`) at create time and POSTs it; the server stores it as `project.id`. POST `/api/projects` therefore accepts an optional `id` in addition to the schema's `@default(cuid())`.
 - Editor data flow: `app/editor/layout.tsx` is a server component and is the single fetch point for the user's owned + shared projects. Data flows down to a client `EditorShell` which holds sidebar state + the `useProjectActions` controller. Mutations call the API and use `router.refresh()` / `router.push()` to re-sync the server-rendered lists.
+- Workspace context: per-room workspace state (project name, AI sidebar open/close) lives in a client `WorkspaceContext` populated by `WorkspaceShell` on the `/editor/[projectId]` route. The shared `EditorNavbar` consumes the context and renders workspace-only chrome (project name, Share, AI toggle) only when the provider is mounted. This keeps the layout-level navbar generic while letting the page own room-specific state.
+- Access control surface: server-side identity + project access is centralized in `lib/project-access.ts` (`getCurrentIdentity`, `getProjectAccess`). Workspace routes call both; missing-or-unauthorized renders `AccessDenied` (spec) rather than `notFound()`. Layout reuses `getCurrentIdentity()` so identity is fetched the same way in both places.
+- Active room highlighting: the `EditorShell` derives the active project ID from `usePathname()` (matching `/editor/{id}`) and the sidebar applies `bg-accent-dim` + `aria-current="page"` to the matching `ProjectListItem`. Sidebar rows are now `next/link` anchors, so project switching is a normal navigation.
 
 ## Session Notes
 
