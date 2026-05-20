@@ -96,7 +96,7 @@ export function EditorShell({
             onRename={actions.openRename}
             onDelete={actions.openDelete}
           />
-          <main className="flex-1 overflow-hidden pt-12">{children}</main>
+          <main className="flex flex-1 flex-col overflow-hidden pt-12">{children}</main>
           {workspaceValue && <AiSidebar isOpen={aiSidebarOpen} />}
           {workspaceValue && <ShareDialog />}
           <ProjectDialogs controller={actions} />
