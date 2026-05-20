@@ -44,8 +44,8 @@ export function ProjectSidebar({
       )}
       <aside
         className={cn(
-          "fixed left-0 top-12 z-40 flex h-[calc(100vh-3rem)] w-64 flex-col border-r border-surface-border bg-surface transition-transform duration-200 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed left-0 top-12 z-40 flex h-[calc(100vh-3rem)] w-64 flex-col border-r border-surface-border bg-surface/80 backdrop-blur shadow-2xl transition-transform duration-200 ease-in-out",
+          isOpen ? "translate-x-0" : "translate-x-[calc(-100%-3rem)]"
         )}
       >
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-surface-border px-4">

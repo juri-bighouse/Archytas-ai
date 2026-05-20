@@ -12,6 +12,13 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Completed
 
+- Sidebar, Canvas, and Drag & Drop Polish (Post-Feature 12):
+  - `components/editor/editor-shell.tsx`: added `overflow-hidden` to prevent layout scrolling and off-screen shadow leaks.
+  - `components/editor/project-sidebar.tsx`: changed sidebar to floating `bg-surface/80 backdrop-blur shadow-2xl` styling and off-screen translation `translate-x-[calc(-100%-3rem)]` to hide the shadow when toggled off.
+  - `components/editor/ai-sidebar.tsx`: added `shadow-2xl` and changed closed translation to `translate-x-[calc(100%+4rem)]`.
+  - `components/canvas/canvas.tsx`: explicitly cleared borders, shadows, margins, and padding on React Flow and its container; customized `<Background>` dots using design token `var(--border-default)`; added fallback parsing in `onDrop` for simplified drag-and-drop actions.
+  - `components/canvas/shape-drag.ts`: updated `writeShapeDragPayload` to write generic fallback keys `application/reactflow` and `text/plain` to `dataTransfer` to ensure node type is explicitly set.
+
 - Feature 12 — Shape Panel:
   - `types/canvas.ts`: added `NodeSize` interface (`width`/`height`) and `SHAPE_DEFAULT_SIZES` — a `Record<NodeShape, NodeSize>` of default node dimensions per shape. Rectangles are wider than tall (`180×90`), circles are square (`120×120`), and diamonds are slightly larger so labels have room (`200×130`); pill `180×70`, cylinder `150×120`, hexagon `180×120`.
   - `components/canvas/shape-drag.ts`: the drag-and-drop contract shared by the shape panel and the canvas. `SHAPE_DRAG_MIME` (`"application/archytas-shape"`), the `ShapeDragPayload` interface (`shape`, `width`, `height`), `writeShapeDragPayload` (serializes onto a `DataTransfer`, sets `effectAllowed = "move"`), and `readShapeDragPayload` (reads + validates on drop — JSON-parses in a try/catch, checks `shape` is a known `NODE_SHAPES` value and `width`/`height` are numbers; returns `null` on any malformed/absent payload). Plain `.ts` module (no JSX, no `"use client"`).

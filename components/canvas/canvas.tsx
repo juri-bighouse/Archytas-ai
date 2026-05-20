@@ -19,8 +19,11 @@ import {
 import {
   CANVAS_NODE_TYPE,
   DEFAULT_NODE_COLOR,
+  NODE_SHAPES,
+  SHAPE_DEFAULT_SIZES,
   type CanvasEdge,
   type CanvasNode,
+  type NodeShape,
 } from "@/types/canvas"
 import { CanvasNodeView } from "./canvas-node"
 import { ShapePanel } from "./shape-panel"
@@ -63,7 +66,24 @@ function CanvasFlow() {
     (event: DragEvent<HTMLDivElement>) => {
       event.preventDefault()
 
-      const payload = readShapeDragPayload(event.dataTransfer)
+      let payload = readShapeDragPayload(event.dataTransfer)
+
+      // Fallback in case the drag dataTransfer custom MIME type is stripped or empty
+      if (!payload) {
+        const shapeStr =
+          event.dataTransfer.getData("application/reactflow") ||
+          event.dataTransfer.getData("text/plain")
+        if (shapeStr && (NODE_SHAPES as readonly string[]).includes(shapeStr)) {
+          const shape = shapeStr as NodeShape
+          const size = SHAPE_DEFAULT_SIZES[shape]
+          payload = {
+            shape,
+            width: size.width,
+            height: size.height,
+          }
+        }
+      }
+
       if (!payload) return
 
       const position = screenToFlowPosition({
@@ -91,7 +111,7 @@ function CanvasFlow() {
 
   return (
     <div
-      className="relative h-full w-full"
+      className="relative h-full w-full bg-base border-none shadow-none rounded-none p-0 m-0 overflow-hidden"
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
@@ -106,9 +126,15 @@ function CanvasFlow() {
         connectionMode={ConnectionMode.Loose}
         colorMode="dark"
         fitView
+        className="border-none shadow-none rounded-none p-0 m-0"
         style={{ backgroundColor: "var(--bg-base)" }}
       >
-        <Background variant={BackgroundVariant.Dots} />
+        <Background
+          variant={BackgroundVariant.Dots}
+          color="var(--border-default)"
+          gap={20}
+          size={1}
+        />
         <MiniMap />
         <Panel position="bottom-center" className="z-10 mb-2">
           <ShapePanel />

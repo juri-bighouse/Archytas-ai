@@ -25,6 +25,8 @@ export function writeShapeDragPayload(
   payload: ShapeDragPayload,
 ): void {
   dataTransfer.setData(SHAPE_DRAG_MIME, JSON.stringify(payload))
+  dataTransfer.setData("application/reactflow", payload.shape)
+  dataTransfer.setData("text/plain", payload.shape)
   dataTransfer.effectAllowed = "move"
 }
 

@@ -79,7 +79,7 @@ export function EditorShell({
       }}
     >
       <WorkspaceProvider value={workspaceValue}>
-        <div className="flex h-screen flex-col">
+        <div className="flex h-screen flex-col overflow-hidden">
           <EditorNavbar
             isSidebarOpen={sidebarOpen}
             onSidebarToggle={() => setSidebarOpen((prev) => !prev)}

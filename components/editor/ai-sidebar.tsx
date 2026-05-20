@@ -13,8 +13,8 @@ export function AiSidebar({ isOpen }: AiSidebarProps) {
       aria-label="AI Copilot"
       aria-hidden={!isOpen}
       className={cn(
-        "fixed bottom-3 right-3 top-14 z-40 flex w-80 flex-col rounded-2xl border border-surface-border bg-surface/80 backdrop-blur transition-transform duration-200 ease-in-out",
-        isOpen ? "translate-x-0" : "translate-x-[calc(100%+1rem)]"
+        "fixed bottom-3 right-3 top-14 z-40 flex w-80 flex-col rounded-2xl border border-surface-border bg-surface/80 backdrop-blur shadow-2xl transition-transform duration-200 ease-in-out",
+        isOpen ? "translate-x-0" : "translate-x-[calc(100%+4rem)]"
       )}
     >
       <div className="flex shrink-0 items-start justify-between gap-2 border-b border-surface-border px-4 py-3">
