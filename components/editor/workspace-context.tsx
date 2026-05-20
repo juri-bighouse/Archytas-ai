@@ -8,12 +8,16 @@ export interface WorkspaceContextValue {
   projectId: string
   projectName: string
   role: WorkspaceRole
+  sidebarOpen: boolean
   aiSidebarOpen: boolean
   toggleAiSidebar: () => void
   closeAiSidebar: () => void
   shareDialogOpen: boolean
   openShareDialog: () => void
   closeShareDialog: () => void
+  templatesModalOpen: boolean
+  openTemplatesModal: () => void
+  closeTemplatesModal: () => void
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)

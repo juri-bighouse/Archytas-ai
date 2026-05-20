@@ -42,6 +42,7 @@ export function EditorShell({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [aiSidebarOpen, setAiSidebarOpen] = useState(false)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [templatesModalOpen, setTemplatesModalOpen] = useState(false)
   const actions = useProjectActions()
   const pathname = usePathname()
   const activeProjectId = getActiveProjectId(pathname)
@@ -61,14 +62,18 @@ export function EditorShell({
       projectId: activeProject.project.id,
       projectName: activeProject.project.name,
       role: activeProject.role,
+      sidebarOpen,
       aiSidebarOpen,
       toggleAiSidebar: () => setAiSidebarOpen((prev) => !prev),
       closeAiSidebar: () => setAiSidebarOpen(false),
       shareDialogOpen,
       openShareDialog: () => setShareDialogOpen(true),
       closeShareDialog: () => setShareDialogOpen(false),
+      templatesModalOpen,
+      openTemplatesModal: () => setTemplatesModalOpen(true),
+      closeTemplatesModal: () => setTemplatesModalOpen(false),
     }
-  }, [activeProject, aiSidebarOpen, shareDialogOpen])
+  }, [activeProject, sidebarOpen, aiSidebarOpen, shareDialogOpen, templatesModalOpen])
 
   return (
     <ProjectDialogsProvider

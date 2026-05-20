@@ -1,6 +1,12 @@
 "use client"
 
-import { PanelLeftClose, PanelLeftOpen, Share2, Sparkles } from "lucide-react"
+import {
+  LayoutTemplate,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Share2,
+  Sparkles,
+} from "lucide-react"
 import { UserButton } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -36,6 +42,15 @@ export function EditorNavbar({ isSidebarOpen, onSidebarToggle }: EditorNavbarPro
       <div className="flex items-center gap-2">
         {workspace && (
           <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={workspace.openTemplatesModal}
+              className="gap-1.5 border border-surface-border bg-elevated/60 hover:bg-elevated"
+            >
+              <LayoutTemplate className="text-brand" />
+              Templates
+            </Button>
             <Button
               variant="ghost"
               size="sm"

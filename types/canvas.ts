@@ -89,8 +89,25 @@ export const CANVAS_NODE_TYPE = "canvasNode"
 /** React Flow type identifier for canvas edges. */
 export const CANVAS_EDGE_TYPE = "canvasEdge"
 
+/**
+ * Default canvas edge color — a light, near-white stroke. Edges are visually
+ * secondary to nodes, so the edge renderer dims this at rest. Canvas content
+ * (documented in context/ui-context.md), kept here alongside NODE_COLORS
+ * rather than as a globals.css theme token.
+ */
+export const EDGE_COLOR = "#f8fafc"
+
+/**
+ * Data carried by every canvas edge. Extends `Record<string, unknown>` to
+ * satisfy the React Flow `Edge` data constraint.
+ */
+export interface CanvasEdgeData extends Record<string, unknown> {
+  /** Inline edge label. Empty string when the edge has no label. */
+  label: string
+}
+
 /** The custom React Flow node used on the canvas. */
 export type CanvasNode = Node<CanvasNodeData, typeof CANVAS_NODE_TYPE>
 
 /** The custom React Flow edge used on the canvas. */
-export type CanvasEdge = Edge<Record<string, unknown>, typeof CANVAS_EDGE_TYPE>
+export type CanvasEdge = Edge<CanvasEdgeData, typeof CANVAS_EDGE_TYPE>
