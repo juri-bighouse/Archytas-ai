@@ -4,13 +4,31 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Editor Workspace Shell (Feature Unit 08) — complete.
+- Share Dialog (Feature Unit 09) — complete.
 
 ## Current Goal
 
-- Move on to Feature 09 (next feature unit — likely real canvas + Liveblocks room, or starter template library).
+- Move on to Feature 10 (next feature unit — check `context/feature-specs/`).
 
 ## Completed
+
+- Feature 09 — Share Dialog:
+  - `lib/clerk-users.ts`: `enrichCollaborators(emails)` calls Clerk Backend (`clerkClient().users.getUserList({ emailAddress })`) once for the entire batch, normalizes emails to lowercase, maps each Clerk user's `firstName + lastName` (fallback `username`) to `displayName` and uses `imageUrl` as-is. Emails with no Clerk match come back as `{ email, displayName: null, imageUrl: null }`. Output order mirrors the unique-emails input so the UI list is stable.
+  - `app/api/projects/[projectId]/collaborators/route.ts`: three handlers, all enforcing auth + project access server-side.
+    - `GET` — owner OR collaborator may list. Returns the enriched array.
+    - `POST` — owner only. Validates email format (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`), 400 on invalid; 400 when inviting the owner's own primary email; 409 on duplicate. Creates the `ProjectCollaborator` row, returns the enriched collaborator with `201`.
+    - `DELETE` — owner only. Email in JSON body. Uses `deleteMany` so it's idempotent (no 404 noise if already gone). Returns `204`.
+    - Internal `loadProjectWithAccess` helper folds the membership check; only calls `currentUser()` when the requester is not the owner (the common case skips the extra Clerk roundtrip).
+  - `components/editor/workspace-context.tsx`: `WorkspaceContextValue` now carries `role: "owner" | "collaborator"`, `shareDialogOpen`, `openShareDialog`, `closeShareDialog` alongside the existing AI-sidebar fields. Exported `WorkspaceRole` type.
+  - `components/editor/share-dialog.tsx`: client dialog. Top-level `ShareDialog` reads `useWorkspaceContext()` and renders nothing outside a workspace; inner `ShareDialogContent` owns all hooks. Layout:
+    - Header — `Share "<project>"` + role-aware description.
+    - Project link row — `LinkIcon` + monospace URL + `Copy` button that swaps to `Check` + `Copied!` for 2s (timeout cleaned up on close/unmount via a `useRef`).
+    - Invite form (owner only) — email `Input` + `UserPlus` button, surfaces server error text in `text-state-error`. Optimistically appends the returned enriched collaborator on success.
+    - Collaborator list — fetched on open via `useEffect`. Empty state, loading state, error state. Each row shows avatar (image or initial), name + email (if both), and a trash button (owner only) that calls `DELETE` and removes the row on success.
+    - Dialog state is fully reset on close (invite field, errors, copied flag, pending timeout).
+  - `components/editor/editor-shell.tsx`: now also owns `shareDialogOpen` and computes the `WorkspaceRole` from whether the active project is in `ownedProjects` (owner) or `sharedProjects` (collaborator). Renders `<ShareDialog>` alongside the AI sidebar when a workspace is active.
+  - `components/editor/editor-navbar.tsx`: the `Share` button now calls `workspace.openShareDialog` (was a no-op placeholder).
+  - Verified: `npm run build` passes; the new route `/api/projects/[projectId]/collaborators` appears in the route summary.
 
 - Feature 08 — Editor Workspace Shell:
   - Spec `context/feature-specs/08-editor-workspace-shell.md` was expanded after the first pass to capture the full designed placeholder (compass hero, grid + radial glow, AI Copilot panel with two cards, `Workspace` eyebrow, Share + AI pill, sidebar avatar chip). The first implementation followed the original minimal wording literally; second pass matches the richer design.
@@ -89,7 +107,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Feature 09 (TBD — check `context/feature-specs/` for next spec). Likely candidates: real canvas (React Flow + Liveblocks room), starter template library, or wiring the Share button to a collaborator invite flow.
+- Feature 10 (TBD — check `context/feature-specs/` for next spec). Likely candidates: real canvas (React Flow + Liveblocks room) or the starter template library.
 
 ## Open Questions
 
@@ -106,6 +124,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - Workspace context: per-room workspace state (project name, AI sidebar open/close) lives in a client `WorkspaceContext` populated by `WorkspaceShell` on the `/editor/[projectId]` route. The shared `EditorNavbar` consumes the context and renders workspace-only chrome (project name, Share, AI toggle) only when the provider is mounted. This keeps the layout-level navbar generic while letting the page own room-specific state.
 - Access control surface: server-side identity + project access is centralized in `lib/project-access.ts` (`getCurrentIdentity`, `getProjectAccess`). Workspace routes call both; missing-or-unauthorized renders `AccessDenied` (spec) rather than `notFound()`. Layout reuses `getCurrentIdentity()` so identity is fetched the same way in both places.
 - Active room highlighting: the `EditorShell` derives the active project ID from `usePathname()` (matching `/editor/{id}`) and the sidebar applies `bg-accent-dim` + `aria-current="page"` to the matching `ProjectListItem`. Sidebar rows are now `next/link` anchors, so project switching is a normal navigation.
+- Collaborator identity is stored only by email in `ProjectCollaborator`. Display name + avatar are looked up on demand from Clerk Backend via `clerkClient().users.getUserList({ emailAddress })`. There is no local users table and there should not be one — collaborators are identified by email alone, and emails with no Clerk match fall back to email-only display.
+- Workspace role detection: the role passed into `WorkspaceContext` is derived purely from which list the active project lives in (`ownedProjects` → `owner`, `sharedProjects` → `collaborator`). API endpoints still re-check ownership server-side; the client role is for UI affordances only.
 
 ## Session Notes
 

@@ -39,6 +39,7 @@ export function EditorNavbar({ isSidebarOpen, onSidebarToggle }: EditorNavbarPro
             <Button
               variant="ghost"
               size="sm"
+              onClick={workspace.openShareDialog}
               className="gap-1.5 border border-surface-border bg-elevated/60 hover:bg-elevated"
             >
               <Share2 className="text-brand" />

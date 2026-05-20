@@ -7,9 +7,11 @@ import { ProjectSidebar } from "@/components/editor/project-sidebar"
 import { ProjectDialogs } from "@/components/editor/project-dialogs"
 import { ProjectDialogsProvider } from "@/components/editor/project-dialogs-context"
 import { AiSidebar } from "@/components/editor/ai-sidebar"
+import { ShareDialog } from "@/components/editor/share-dialog"
 import {
   WorkspaceProvider,
   type WorkspaceContextValue,
+  type WorkspaceRole,
 } from "@/components/editor/workspace-context"
 import { useProjectActions } from "@/hooks/use-project-actions"
 import type { ProjectSummary } from "@/lib/projects/data"
@@ -39,29 +41,34 @@ export function EditorShell({
 }: EditorShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [aiSidebarOpen, setAiSidebarOpen] = useState(false)
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const actions = useProjectActions()
   const pathname = usePathname()
   const activeProjectId = getActiveProjectId(pathname)
 
   const activeProject = useMemo(() => {
     if (!activeProjectId) return null
-    return (
-      ownedProjects.find((p) => p.id === activeProjectId) ??
-      sharedProjects.find((p) => p.id === activeProjectId) ??
-      null
-    )
+    const owned = ownedProjects.find((p) => p.id === activeProjectId)
+    if (owned) return { project: owned, role: "owner" as WorkspaceRole }
+    const shared = sharedProjects.find((p) => p.id === activeProjectId)
+    if (shared) return { project: shared, role: "collaborator" as WorkspaceRole }
+    return null
   }, [activeProjectId, ownedProjects, sharedProjects])
 
   const workspaceValue = useMemo<WorkspaceContextValue | null>(() => {
     if (!activeProject) return null
     return {
-      projectId: activeProject.id,
-      projectName: activeProject.name,
+      projectId: activeProject.project.id,
+      projectName: activeProject.project.name,
+      role: activeProject.role,
       aiSidebarOpen,
       toggleAiSidebar: () => setAiSidebarOpen((prev) => !prev),
       closeAiSidebar: () => setAiSidebarOpen(false),
+      shareDialogOpen,
+      openShareDialog: () => setShareDialogOpen(true),
+      closeShareDialog: () => setShareDialogOpen(false),
     }
-  }, [activeProject, aiSidebarOpen])
+  }, [activeProject, aiSidebarOpen, shareDialogOpen])
 
   return (
     <ProjectDialogsProvider
@@ -91,6 +98,7 @@ export function EditorShell({
           />
           <main className="flex-1 overflow-hidden pt-12">{children}</main>
           {workspaceValue && <AiSidebar isOpen={aiSidebarOpen} />}
+          {workspaceValue && <ShareDialog />}
           <ProjectDialogs controller={actions} />
         </div>
       </WorkspaceProvider>

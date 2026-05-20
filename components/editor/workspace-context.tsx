@@ -2,12 +2,18 @@
 
 import { createContext, useContext, type ReactNode } from "react"
 
+export type WorkspaceRole = "owner" | "collaborator"
+
 export interface WorkspaceContextValue {
   projectId: string
   projectName: string
+  role: WorkspaceRole
   aiSidebarOpen: boolean
   toggleAiSidebar: () => void
   closeAiSidebar: () => void
+  shareDialogOpen: boolean
+  openShareDialog: () => void
+  closeShareDialog: () => void
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)
